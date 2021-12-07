@@ -7,7 +7,7 @@ try:
     crsr = cnxn.cursor()
 except pyodbc.Error:
     print("Database connection failed!")
-
+ 
 # Define Lookup Commands
 def outputMakeup(crsr,formCode):
     pass

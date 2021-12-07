@@ -1,7 +1,7 @@
 from ConsoleApp import *
 from GUI import *
 from ReadPDF import *
-
+ 
 while True:
     print()
     cmd = int(input("Options: Display all components (1), Display all formulas (2), Find a specific component (3), Find a specific formula (4), Search formulas (5), Search components (6), Add component (7), Add makeup element (8), Add formula (9), Update formula notes (10), Exit (0) "))
