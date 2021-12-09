@@ -1,5 +1,5 @@
 import logging
-import os.path
+import os
 import json
 
 from adobe.pdfservices.operation.auth.credentials import Credentials
@@ -25,6 +25,22 @@ gppIndex = 6
 index = 0
 begin = False
 components = [[]]
+
+def reset():
+    global nextColorName, nextMPNum, nextVersionNum, MPNum, colorName, versionNum, preIC, codeIndex, descIndex,gppIndex, index, begin, components
+    nextColorName = False
+    nextMPNum = False
+    nextVersionNum = False
+    MPNum = -1
+    colorName = ""
+    versionNum = -1
+    preIC = 0
+    codeIndex = 0
+    descIndex = 1
+    gppIndex = 6
+    index = 0
+    begin = False
+    components = [[]]
 
 def isNum(e):
     for i in e:
@@ -98,8 +114,8 @@ def postICElements(e):
     global begin # bools
 
     if(preIC == 2):
-        print(e['Text'])
-        if('/TD/' in e['Path'] and begin):
+        # print(e['Text'])
+        if("/TD/" in e['Path'] and begin):
             index = 0
             components.append([])
         elif(begin):
@@ -134,69 +150,75 @@ def printCurrents():
     
     print('---------')
 
-try:
-    # get base path.
-    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+def extractPDF(path):
+    reset()
 
-    # Initial setup, create credentials instance.
-    credentials = Credentials.service_account_credentials_builder() \
-        .from_file(base_path + "/pdfservices-api-credentials.json") \
-        .build()
-
-    # Create an ExecutionContext using credentials and create a new operation instance.
-    execution_context = ExecutionContext.create(credentials)
-    extract_pdf_operation = ExtractPDFOperation.create_new()
-
-    # Set operation input from a source file.
-    extract_pdf_operation.set_input(FileRef.create_from_local_file("C:/Users/bobhu/Desktop/Coca Cola-Silver.pdf")) # Hardcode local file for testing purposes
-
-    # Build ExtractPDF options and set them into the operation
-    extract_pdf_options: ExtractPDFOptions = ExtractPDFOptions.builder() \
-        .with_element_to_extract(ExtractElementType.TEXT) \
-        .build()
-    extract_pdf_operation.set_options(extract_pdf_options)
     try:
-        # Execute the operation.
-        result: FileRef = extract_pdf_operation.execute(execution_context)
+        # get base path.
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) +"/PHOENIXCREATIVE"
 
-        # Save the result to the specified location.
-        result.save_as(base_path + "/output/ExtractTextInfoFromPDF.json")
+        # Initial setup, create credentials instance.
+        credentials = Credentials.service_account_credentials_builder() \
+            .from_file(base_path + "/pdfservices-api-credentials.json") \
+            .build()
 
-        f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "r+", encoding="cp437") # Encoding lets us replace stupid characters
-        
-        fixed = f.readline()
-        while(fixed[0] != '{'):
+        # Create an ExecutionContext using credentials and create a new operation instance.
+        execution_context = ExecutionContext.create(credentials)
+        extract_pdf_operation = ExtractPDFOperation.create_new()
+
+        # Set operation input from a source file.
+        extract_pdf_operation.set_input(FileRef.create_from_local_file(path))
+
+        # Build ExtractPDF options and set them into the operation
+        extract_pdf_options: ExtractPDFOptions = ExtractPDFOptions.builder() \
+            .with_element_to_extract(ExtractElementType.TEXT) \
+            .build()
+        extract_pdf_operation.set_options(extract_pdf_options)
+        try:
+            # Execute the operation.
+            result: FileRef = extract_pdf_operation.execute(execution_context)
+
+            if os.path.exists(base_path + "/output/ExtractTextInfoFromPDF.json"):
+                os.remove(base_path + "/output/ExtractTextInfoFromPDF.json")
+
+            # Save the result to the specified location.
+            result.save_as(base_path + "/output/ExtractTextInfoFromPDF.json")
+
+            f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "r+", encoding="cp437") # Encoding lets us replace stupid characters
+            
+            fixed = f.readline()
             while(fixed[0] != '{'):
-                if(fixed[0] == '\n'):
-                    fixed = f.readline()
-                else: 
-                    fixed = fixed[1:]
-        
-        while(not fixed.endswith('}')):
-            fixed = fixed[:len(fixed)-1]
-        f.close()
+                while(fixed[0] != '{'):
+                    if(fixed[0] == '\n'):
+                        fixed = f.readline()
+                    else: 
+                        fixed = fixed[1:]
+            
+            while(not fixed.endswith('}')):
+                fixed = fixed[:len(fixed)-1]
+            f.close()
 
-        f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "w", encoding="cp437") # Close and reopen file for writing over current stuff. Then we can use it for parsing in the program.
-        f.write(fixed)
-        f.close()
-    except (Exception):
-        print('')
+            f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "w", encoding="cp437") # Close and reopen file for writing over current stuff. Then we can use it for parsing in the program.
+            f.write(fixed)
+            f.close()
+        except (Exception):
+            print('')
 
-    f = open(base_path + "/output/ExtractTextInfoFromPDF.json")
-    data = json.load(f)
+        f = open(base_path + "/output/ExtractTextInfoFromPDF.json")
+        data = json.load(f)
 
-    for i in data['elements']:
-        if('Text' in i):
-            if(preIC == 0):
-                checkForElements(i)
-            elif(preIC == 1 or preIC == 2):
-                postICElements(i)
-    
-    components[0][0] = colorName
-    components[0][1] = versionNum
-    components[0][2] = MPNum
-    printCurrents()
-    # return components
+        for i in data['elements']:
+            if('Text' in i):
+                if(preIC == 0):
+                    checkForElements(i)
+                elif(preIC == 1 or preIC == 2):
+                    postICElements(i)
 
-except (ServiceApiException, ServiceUsageException, SdkException):
-    logging.exception("Exception encountered while executing operation")
+        components[0][0] = colorName
+        components[0][1] = versionNum
+        components[0][2] = MPNum
+        # printCurrents()
+        return components
+
+    except (ServiceApiException, ServiceUsageException, SdkException):
+        logging.exception("Exception encountered while executing operation")

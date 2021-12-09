@@ -2,7 +2,7 @@ import pyodbc
 
 # Define Global Connection
 try:
-    conn_str = (r'DRIVER={SQL Server};Server=CS1;Database=PhoenixCreative;Trusted_Connection=YES;')
+    conn_str = (r'DRIVER={SQL Server};Server=CS1;Database=PhoenixCreative;Uid=haustin23x;Pwd=2256017;')
     cnxn = pyodbc.connect(conn_str)
     crsr = cnxn.cursor()
 except pyodbc.Error:
