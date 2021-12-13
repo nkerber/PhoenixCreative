@@ -9,8 +9,17 @@ except pyodbc.Error:
     print("Database connection failed!")
  
 # Define Lookup Commands
+
+
+def getMakeupElements(crsr,formCode):
+    sql =  "SELECT M.CompCode,C.IntDesc,M.GramsPerPint " 
+    sql += "FROM Makeup M, Component C "
+    sql += "WHERE FormNum = " + str(formCode) + " AND M.CompCode = C.IntCode "
+    sql += "ORDER BY GramsPerPint DESC"
+    rows = crsr.execute(sql)
+    return rows
+
 def outputMakeup(crsr,formCode):
-    pass
     sql =  "SELECT M.CompCode,C.IntDesc,M.GramsPerPint " 
     sql += "FROM Makeup M, Component C "
     sql += "WHERE FormNum = " + str(formCode) + " AND M.CompCode = C.IntCode "
@@ -42,10 +51,23 @@ def findFormula(crsr):
     outputFormula(crsr,sql)
     outputMakeup(crsr,formCode)
 
-def displayAllFormulas(crsr):
+def getAllFormulas(crsr):
     sql = "SELECT * "
     sql+= "FROM Formula"
-    outputFormula(crsr,sql)
+    rows = crsr.execute(sql)
+    return rows
+
+def getFormula(crsr,formName):
+    sql = "SELECT * "
+    sql += "FROM Formula "
+    sql += "WHERE FormName = '"+formName+"'"
+    return crsr.execute(sql)
+
+def getSearchedFormulas(crsr,param):
+    sql =  "SELECT * "
+    sql += "FROM Formula "
+    sql += "WHERE FormName LIKE '%"+str(param)+"%' OR MPNum LIKE '%"+str(param)+"%' OR Version LIKE '%"+str(param)+"%' OR Notes LIKE '%"+str(param)+"%'"
+    return crsr.execute(sql)
 
 def outputComponent(crsr,sql):
     rows = crsr.execute(sql)
@@ -125,6 +147,9 @@ def addFormula(crsr, formNum,formVersion,formName):
 # Other
 
 def updateNotes(crsr,formNum,formVersion,notes):
-    sql = "UPDATE Formula SET Notes = '"+notes+"' WHERE MPNum = '"+str(formNum)+"' AND Version = '"+str(formVersion)+"'"
+    if notes == "":
+        sql = "UPDATE Formula SET Notes = NULL WHERE MPNum = '"+str(formNum)+"' AND Version = '"+str(formVersion)+"'"
+    else:
+        sql = "UPDATE Formula SET Notes = '"+notes+"' WHERE MPNum = '"+str(formNum)+"' AND Version = '"+str(formVersion)+"'"
     crsr.execute(sql)
     print("Updated notes for formula",str(formNum),str(formVersion),"successfully.")

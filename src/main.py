@@ -1,5 +1,5 @@
 from ConsoleApp import *
-from ExtractFunction import *
+#from ExtractFunction import *
 # from GUI import *
  
 while True:
@@ -31,7 +31,7 @@ while True:
     elif cmd == 11:
         to_upload = []
         path = str(input("Please enter the absolute path to the file you want to upload"))
-        to_upload = extractPDF(path)
+        #to_upload = extractPDF(path)
         addFormula(crsr, to_upload[0][2], to_upload[0][1], to_upload[0][0])
         old = to_upload[0]
         to_upload = to_upload[1:]
