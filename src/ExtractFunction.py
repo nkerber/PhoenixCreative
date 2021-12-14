@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import zipfile
 
 from adobe.pdfservices.operation.auth.credentials import Credentials
 from adobe.pdfservices.operation.exception.exceptions import ServiceApiException, ServiceUsageException, SdkException
@@ -57,8 +58,8 @@ def checkForElements(e):
     global versionNum
     global preIC
 
-    e['Text'] = str.removesuffix(e['Text'], ' ')
-    e['Text'] = str.removeprefix(e['Text'], ' ')
+    e['Text'] = str.rstrip(e['Text'], ' ')
+    e['Text'] = str.lstrip(e['Text'], ' ')
 
     if(nextMPNum):
         if(str.isdigit(e['Text'])):
@@ -159,7 +160,7 @@ def extractPDF(path):
 
         # Initial setup, create credentials instance.
         credentials = Credentials.service_account_credentials_builder() \
-            .from_file(base_path + "/pdfservices-api-credentials.json") \
+            .from_file("./pdfservices-api-credentials.json") \
             .build()
 
         # Create an ExecutionContext using credentials and create a new operation instance.
@@ -178,13 +179,23 @@ def extractPDF(path):
             # Execute the operation.
             result: FileRef = extract_pdf_operation.execute(execution_context)
 
-            if os.path.exists(base_path + "/output/ExtractTextInfoFromPDF.json"):
-                os.remove(base_path + "/output/ExtractTextInfoFromPDF.json")
+            # Remove previous file
+            if os.path.exists("./output/structuredData.json"):
+                os.remove("./output/structuredData.json")
 
             # Save the result to the specified location.
-            result.save_as(base_path + "/output/ExtractTextInfoFromPDF.json")
+            result.save_as("./output/ExtractTextInfoFromPDF.zip")
 
-            f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "r+", encoding="cp437") # Encoding lets us replace stupid characters
+            # Unzip file
+            with zipfile.ZipFile("./output/ExtractTextInfoFromPDF.zip", 'r') as zipRef:
+                zipRef.extractall("./output")
+
+            # Remove old zip file
+            if os.path.exists("./output/ExtractTextInfoFromPDF.zip"):
+                os.remove("./output/ExtractTextInfoFromPDF.zip")
+
+            # Open JSON file
+            f = open("./output/structuredData.json", "r+", encoding="cp437") # Encoding lets us replace stupid characters
             
             fixed = f.readline()
             while(fixed[0] != '{'):
@@ -198,13 +209,13 @@ def extractPDF(path):
                 fixed = fixed[:len(fixed)-1]
             f.close()
 
-            f = open(base_path + "/output/ExtractTextInfoFromPDF.json", "w", encoding="cp437") # Close and reopen file for writing over current stuff. Then we can use it for parsing in the program.
+            f = open("./output/structuredData.json", "w", encoding="cp437") # Close and reopen file for writing over current stuff. Then we can use it for parsing in the program.
             f.write(fixed)
             f.close()
         except (Exception):
             print('')
 
-        f = open(base_path + "/output/ExtractTextInfoFromPDF.json")
+        f = open("./output/structuredData.json")
         data = json.load(f)
 
         for i in data['elements']:
