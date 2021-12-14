@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>867</width>
-    <height>501</height>
+    <width>884</width>
+    <height>567</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -121,7 +121,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="SelectedColor" stretch="1,0,3">
+    <layout class="QVBoxLayout" name="SelectedColor" stretch="1,0,0,3">
      <item>
       <widget class="QFrame" name="ColorInfo">
        <property name="frameShape">
@@ -152,8 +152,14 @@
            <layout class="QHBoxLayout" name="nameinfo">
             <item>
              <widget class="QLabel" name="colorNameLabel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Color Name:</string>
+               <string>Color Name: </string>
               </property>
              </widget>
             </item>
@@ -170,8 +176,14 @@
            <layout class="QHBoxLayout" name="numinfo">
             <item>
              <widget class="QLabel" name="colorNumberLabel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Color System Number:</string>
+               <string>Color System Number: </string>
               </property>
              </widget>
             </item>
@@ -188,8 +200,14 @@
            <layout class="QHBoxLayout" name="vinfo">
             <item>
              <widget class="QLabel" name="colorVersionLabel">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Version:</string>
+               <string>Version: </string>
               </property>
              </widget>
             </item>
@@ -206,13 +224,25 @@
            <layout class="QHBoxLayout" name="measureoptions">
             <item>
              <widget class="QLabel" name="label_3">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>Measurements in grams per:</string>
+               <string>Measurements in grams per:  </string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QComboBox" name="measurementSelector">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="currentIndex">
                <number>5</number>
               </property>
@@ -247,6 +277,19 @@
                </property>
               </item>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -309,9 +352,30 @@
       </spacer>
      </item>
      <item>
+      <widget class="QLabel" name="label_2">
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>10</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Components:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QTableWidget" name="makeupTable">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustIgnored</enum>
+       </property>
+       <property name="dragDropOverwriteMode">
+        <bool>false</bool>
        </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::NoSelection</enum>
@@ -320,7 +384,7 @@
         <enum>Qt::DotLine</enum>
        </property>
        <property name="sortingEnabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <attribute name="horizontalHeaderVisible">
         <bool>true</bool>

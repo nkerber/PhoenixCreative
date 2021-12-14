@@ -51,7 +51,7 @@ background-color:rgb(220, 218, 213);*/
           <enum>QListView::Adjust</enum>
          </property>
          <property name="currentRow">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <item>
           <property name="text">
