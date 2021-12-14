@@ -53,7 +53,20 @@ def findFormula(crsr):
 
 def getAllFormulas(crsr):
     sql = "SELECT * "
-    sql+= "FROM Formula"
+    sql+= "FROM Formula "
+    sql+= "ORDER BY FormName"
+    rows = crsr.execute(sql)
+    return rows
+
+def componentCount(crsr):
+    sql = "SELECT COUNT(*) AS Count "
+    sql += "FROM Component"
+    rows = crsr.execute(sql)
+    return rows
+
+def formulaCount(crsr):
+    sql = "SELECT COUNT(*) AS Count "
+    sql += "FROM Formula"
     rows = crsr.execute(sql)
     return rows
 
@@ -64,9 +77,10 @@ def getFormula(crsr,formName):
     return crsr.execute(sql)
 
 def getSearchedFormulas(crsr,param):
-    sql =  "SELECT * "
-    sql += "FROM Formula "
-    sql += "WHERE FormName LIKE '%"+str(param)+"%' OR MPNum LIKE '%"+str(param)+"%' OR Version LIKE '%"+str(param)+"%' OR Notes LIKE '%"+str(param)+"%'"
+    sql =  "SELECT DISTINCT Formula.MPNum, Formula.Version, CAST(Formula.FormName AS VARCHAR(MAX)) as FormName, CAST(Formula.Notes AS VARCHAR(MAX)) as Notes "
+    sql += "FROM Formula, Makeup, Component "
+    sql += "WHERE Formula.MPNum = Makeup.FormNum AND Makeup.CompCode = Component.IntCode AND "
+    sql += "(Component.IntDesc LIKE '%"+str(param) +"%' OR Formula.FormName LIKE '%"+str(param)+"%' OR Formula.MPNum LIKE '%"+str(param)+"%' OR Formula.Version LIKE '%"+str(param)+"%' OR Formula.Notes LIKE '%"+str(param)+"%')"
     return crsr.execute(sql)
 
 def outputComponent(crsr,sql):
