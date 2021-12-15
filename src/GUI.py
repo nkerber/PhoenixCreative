@@ -1,11 +1,13 @@
 import sys
+from PyQt5 import QtCore
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import *#QDialog, QApplication, QStackedWidget, QWidget
-from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
+from PyQt5.QtCore import QEvent, Qt, QThread, QObject, pyqtSignal
 import PyQt5.QtGui as QtGui
-from ConsoleApp import *
+from PyODBCqueries import *
 from decimal import Decimal
 from ExtractFunction import *
+from time import sleep
 
 #global variable for outputting correct numbers
 #dictionary keys are the index of the measurementSelector dropdown menu,
@@ -17,6 +19,13 @@ class UploadDialog(QDialog):
     def __init__(self):
         super(UploadDialog,self).__init__()
         loadUi('src\\UploadDialog.ui',self)
+    
+    def closeEvent(self, event):
+        # closes the dialog automatically when the upload thread finishes.
+        # if the event's sender is anything other than a Worker object,
+        # ie. a human, ignore the close request. (idiot-proofing)
+        if not isinstance(self.sender(),Worker):
+            event.ignore()
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -29,6 +38,7 @@ class Worker(QObject):
         self.files = f
 
     def run(self):
+        #sleep(0.5)
         current = 0
         for f in self.files:
             print(f)
@@ -36,20 +46,22 @@ class Worker(QObject):
             if ".pdf" in f:
                 self.fileName.emit(f)
                 to_upload = extractPDF(f)
-                addFormula(crsr, to_upload[0][2], to_upload[0][1], to_upload[0][0])
+                addFormula( to_upload[0][2], to_upload[0][1], to_upload[0][0])
                 old = to_upload[0]
                 to_upload = to_upload[1:]
                 for i in to_upload:
                     try:
-                        addComponent(crsr, i[0], i[1])
-                        addMakeupElement(crsr, old[2], old[1], i[0],i[2])
+                        addComponent( i[0], i[1])
+                        addMakeupElement( old[2], old[1], i[0],i[2])
                     except(Exception):
                         print()
             self.progress.emit(current)
+        sleep(2)
         self.finished.emit()
     
-
 class MainScreen(QMainWindow):
+    changed = QtCore.pyqtSignal(int)
+    
     def __init__(self):
         super(MainScreen,self).__init__()
         loadUi('src\\Navigator.ui',self)
@@ -57,7 +69,7 @@ class MainScreen(QMainWindow):
 
         home = HomeScreen()
         upload = UploadScreen()
-        formula = FormulaScreen()
+        formula = FormulaScreen(self)
         self.MainViewStack.addWidget(home)
         self.MainViewStack.addWidget(upload)
         self.MainViewStack.addWidget(formula)
@@ -65,6 +77,10 @@ class MainScreen(QMainWindow):
     def selectPanel(self):
         print("Navigating to page:",str(self.NavPane.currentRow()))
         self.MainViewStack.setCurrentIndex(self.NavPane.currentRow())
+        if self.NavPane.currentRow() == 2:
+            self.MainViewStack.currentWidget().populateFormulaList()
+            self.MainViewStack.currentWidget().clear()
+        self.changed.emit(self.NavPane.currentRow())
 
 class UploadScreen(QWidget):
     def __init__(self):
@@ -105,7 +121,6 @@ class UploadScreen(QWidget):
             newDialog.show()
             newDialog.currentFormula.setText("Demo Formula Name2")
             newDialog.progressBar.setRange(0, len(links))
-
             thread = QThread()
             worker = Worker(links)
             worker.moveToThread(thread)
@@ -118,12 +133,7 @@ class UploadScreen(QWidget):
             worker.fileName.connect(newDialog.currentFormula.setText)
 
             thread.start()
-            
-            try:
-                sys.exit(newDialog.exec())
-            except:
-                print("")
-
+                    
     def importFiles(self):
 
         options = QFileDialog.Options()
@@ -147,6 +157,7 @@ class UploadScreen(QWidget):
         thread.finished.connect(thread.deleteLater)
         worker.progress.connect(newDialog.progressBar.setValue)
         worker.fileName.connect(newDialog.currentFormula.setText)
+        worker.finished.connect(newDialog.close)
 
         thread.start()
         try:
@@ -160,18 +171,20 @@ class HomeScreen(QWidget):
         loadUi('src\\HomeWidget.ui',self)
 
         #is there a better way to do this without this pointless loop?
-        for row in componentCount(crsr):
+        for row in componentCount():
             self.numComponents.setText(str(row.Count))
         
-        for row in formulaCount(crsr):
+        for row in formulaCount():
             self.numFormulas.setText(str(row.Count))
 
 class FormulaScreen(QWidget):
-    def __init__(self):
-        super(FormulaScreen, self).__init__()
+    def __init__(self,parent):
+        super(FormulaScreen, self).__init__(parent)
         loadUi('src\\FormulaWidget.ui',self)
         self.populateFormulaList()
         self.measurementSelector.setCurrentIndex(currentUnit)
+
+        self.versionList.currentIndexChanged.connect(self.updateMakeup)
 
         #self.formulaList.setCurrentRow(0)
         #self.formulaList.setCurrentItem(self.formulaList.itemFromIndex(0))
@@ -180,26 +193,28 @@ class FormulaScreen(QWidget):
  
         #self.backButton.clicked.connect(self.goBack)
         self.formulaList.itemSelectionChanged.connect(self.updateSelection)
-        #Note: right now I imagine this could have the potential to
-        #cause tremendous lag. Need a way to make this only
-        #update notes in the database every 10 seconds or something like that
-        # could maybe call this only when the user changes their selection?
-        # create an updateallinfo function that gets called every time the user switches
-        # screens ??
+
         self.notesBox.textChanged.connect(self.notesChanged)
         self.measurementSelector.currentIndexChanged.connect(self.updateMeasureUnits)
 
         self.searchBox.textChanged.connect(self.searchFormulasResults)
-        #QPlainTextEdit.plainte
+        
+
+    def clear(self):
+        self.notesBox.clear()
+        self.colorNumLarge.clear()
+        self.colorNameLarge.clear()
+        self.makeupTable.clearContents()
+        self.displayWidget.hide()
 
     def searchFormulasResults(self):
-        if self.searchBox.toPlainText=="":
-            self.populateFormulaList(crsr)
+        if self.searchBox.toPlainText().strip()=="":
+            self.populateFormulaList()
         else:
-            r = getSearchedFormulas(crsr,self.searchBox.toPlainText())
+            r = getSearchedFormulas(self.searchBox.toPlainText())
             self.formulaList.clear()
             for row in r:
-                self.formulaList.addItem(row.FormName.title())
+                self.formulaList.addItem(str(row.MPNum)+" - "+row.FormName.title())
 
     def updateMeasureUnits(self):
         global currentUnit
@@ -207,38 +222,52 @@ class FormulaScreen(QWidget):
         self.updateMakeup()
 
     def updateMakeup(self):
-        makeupElements = getMakeupElements(crsr,str(self.colorNumLarge.text())).fetchall()
-        self.makeupTable.setRowCount(len(makeupElements))
-        self.makeupTable.clearContents()
-        currentRow = 0
+        if not self.colorNumLarge.text() == "" and not self.versionList.currentText() == "":
+            self.makeupTable.setSortingEnabled(False)
+            makeupElements = getMakeupElements(str(self.colorNumLarge.text()),self.versionList.currentText()).fetchall()
+            self.makeupTable.setRowCount(len(makeupElements))
+            self.makeupTable.clearContents()
 
-        factor = Decimal(unitMultiplier[currentUnit])
+            currentRow = 0
 
-        for element in makeupElements:
-            self.makeupTable.setItem(currentRow,0,QTableWidgetItem(element.CompCode))
-            self.makeupTable.setItem(currentRow,1,QTableWidgetItem(element.IntDesc.title()))
-            self.makeupTable.setItem(currentRow,2,QTableWidgetItem(str(factor*element.GramsPerPint)))
-            if not currentRow == 0:
-                self.makeupTable.setItem(currentRow,3,QTableWidgetItem(str(factor*element.GramsPerPint+Decimal(self.makeupTable.item(currentRow-1,3).text()))))
-            else:
-                self.makeupTable.setItem(currentRow,3,QTableWidgetItem(str(factor*element.GramsPerPint)))
-            currentRow += 1
+            factor = Decimal(unitMultiplier[currentUnit])
+
+            for element in makeupElements:
+                self.makeupTable.setItem(currentRow,0,QTableWidgetItem(element.CompCode))
+                self.makeupTable.setItem(currentRow,1,QTableWidgetItem(element.IntDesc.title()))
+                self.makeupTable.setItem(currentRow,2,QTableWidgetItem(str(factor*element.GramsPerPint)))
+                if not currentRow == 0:
+                    self.makeupTable.setItem(currentRow,3,QTableWidgetItem(str(factor*element.GramsPerPint+Decimal(self.makeupTable.item(currentRow-1,3).text()))))
+                else:
+                    self.makeupTable.setItem(currentRow,3,QTableWidgetItem(str(factor*element.GramsPerPint)))
+                currentRow += 1
+            
+            self.makeupTable.setSortingEnabled(True)
+
+    def updateVersion(self):
+        selection = str(self.formulaList.currentItem().text()).split()[0]
+        colorInfo = getFormula(selection,self.versionList.currentText())
+        for color in colorInfo:
+            self.colorNameLarge.setText(color.FormName.title())
+        self.updateMakeup()
+
 
     def updateSelection(self):
-        selection = str(self.formulaList.currentItem().text())
+        self.displayWidget.show()
+        selection = str(self.formulaList.currentItem().text()).split()[0]
         print("User selected formula",selection)
-        colorInfo = getFormula(crsr,selection)
+        versions = getNumVersions(selection)
+        self.versionList.clear()
+        for v in versions:
+            print(v)
+            self.versionList.addItem(str(v.Version))
 
-        # note the current temporary solution for versioning.
-        # need to find a better way!
+        colorInfo = getFormula(selection,self.versionList.currentText())
+        print("Debugging, version selected is:",self.versionList.currentText())
 
         for color in colorInfo:
             self.colorNameLarge.setText(color.FormName.title())
             self.colorNumLarge.setText(str(color.MPNum))
-            self.colorVersionLarge.setText(str(color.Version))
-        # THIS IS A STUPID WORKAROUND, NEED TO FIND A BETTER SOLUTION
-        # otherwise the queries get stacked and the program breaks! ideas welcome
-        #self.colorNameLarge = colorInfo.FormName
 
         if color.Notes == None:
             self.notesBox.clear()
@@ -250,13 +279,15 @@ class FormulaScreen(QWidget):
         #the following line is a temporary workaround until I can make it so that the
         # interface for formulas is not displayed until a formula is actually selected
         if self.formulaList.currentItem():
-            updateNotes(crsr,str(self.colorNumLarge.text()),str(self.colorVersionLarge.text()),self.notesBox.toPlainText())
-        crsr.commit()
+            updateNotes(str(self.colorNumLarge.text()),self.versionList.currentText(),self.notesBox.toPlainText())
+
     def populateFormulaList(self):
-        r = (getAllFormulas(crsr))
+        self.formulaList.clearSelection()
+        print("Refreshing formula list!")
+        r = (getAllFormulas())
         self.formulaList.clear()
         for row in r:
-            self.formulaList.addItem(row.FormName.title())
+            self.formulaList.addItem(str(row.MPNum)+" - "+row.FormName.title())
 
     #def goBack(self):
         #widget.setCurrentIndex(widget.currentIndex()-1)
@@ -267,6 +298,10 @@ main.setMinimumHeight(600)
 main.setMinimumWidth(1000)
 main.setWindowTitle("Phoenix Creative Database")
 main.show()
+
+# demoDialog = UploadDialog()
+# demoDialog.setWindowFlag(Qt.FramelessWindowHint)
+# demoDialog.show()
 
 try:
     sys.exit(app.exec())
