@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,4">
+   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5">
     <item>
      <widget class="QFrame" name="frame">
       <property name="frameShape">
