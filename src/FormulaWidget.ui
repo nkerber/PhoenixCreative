@@ -65,7 +65,7 @@
          <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string>Search colors...</string>
+         <string>Search formulas...</string>
         </property>
        </widget>
       </item>
@@ -75,7 +75,7 @@
          <string>Include formulas that are comprised of sub-components that match the search parameter</string>
         </property>
         <property name="text">
-         <string>Search sub-components of formula</string>
+         <string>Enable Deep Search</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -190,7 +190,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Color Name: </string>
+                  <string>Formula Name: </string>
                  </property>
                 </widget>
                </item>
@@ -214,7 +214,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Color System Number: </string>
+                  <string>Formula System Number: </string>
                  </property>
                 </widget>
                </item>
