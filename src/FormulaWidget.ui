@@ -70,7 +70,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="advancedFormulaCheckbox">
+       <widget class="QCheckBox" name="deepSearchCheckbox">
         <property name="toolTip">
          <string>Include formulas that are comprised of sub-components that match the search parameter</string>
         </property>

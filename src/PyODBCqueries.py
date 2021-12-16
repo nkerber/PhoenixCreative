@@ -54,11 +54,18 @@ def getFormula(formNum,version):
     sql += "WHERE MPNum = '"+formNum+"' AND Version = "+version
     return connectA.execute(sql)
 
-def getSearchedFormulas(param):
+def deepFormulaSearch(param):
     sql =  "SELECT DISTINCT Formula.MPNum, Formula.Version, CAST(Formula.FormName AS VARCHAR(MAX)) as FormName, CAST(Formula.Notes AS VARCHAR(MAX)) as Notes "
     sql += "FROM Formula, Makeup, Component,(SELECT MAX(F.Version) as Version, F3.MPNum as MPNum FROM Formula F, (SELECT DISTINCT MPNum From Formula) as F3 WHERE F.MPNum = F3.MPNum GROUP BY F3.MPNum) as F2 "
     sql += "WHERE Formula.MPNum = Makeup.FormNum AND Makeup.CompCode = Component.IntCode AND Formula.Version = F2.Version AND Formula.MPNum = F2.MPNum AND "
     sql += "(Component.IntDesc LIKE '%"+str(param) +"%' OR Formula.FormName LIKE '%"+str(param)+"%' OR Formula.MPNum LIKE '%"+str(param)+"%' OR Formula.Version LIKE '%"+str(param)+"%' OR Formula.Notes LIKE '%"+str(param)+"%')"
+    return connectA.execute(sql)
+
+def shallowFormulaSearch(param):
+    sql =  "SELECT DISTINCT Formula.MPNum, Formula.Version, CAST(Formula.FormName AS VARCHAR(MAX)) as FormName, CAST(Formula.Notes AS VARCHAR(MAX)) as Notes "
+    sql += "FROM Formula,(SELECT MAX(F.Version) as Version, F3.MPNum as MPNum FROM Formula F, (SELECT DISTINCT MPNum From Formula) as F3 WHERE F.MPNum = F3.MPNum GROUP BY F3.MPNum) as F2 "
+    sql += "WHERE Formula.Version = F2.Version AND Formula.MPNum = F2.MPNum AND "
+    sql += "(Formula.FormName LIKE '%"+str(param)+"%' OR Formula.MPNum LIKE '%"+str(param)+"%' OR Formula.Version LIKE '%"+str(param)+"%' OR Formula.Notes LIKE '%"+str(param)+"%')"
     return connectA.execute(sql)
 
 def addComponent(code,desc):
@@ -66,6 +73,8 @@ def addComponent(code,desc):
     sql += "UPDATE Component SET IntDesc = '"+desc+"' WHERE IntCode = '"+code+"'"
     sql += "ELSE INSERT INTO Component VALUES ('"+code+"','"+desc+"')"
     connectA.execute(sql)
+    connectA.commit()
+
     print("Updated",code,"successfully.")
 
 def addMakeupElement(formNum,Version,compCode,GpP):
@@ -73,13 +82,18 @@ def addMakeupElement(formNum,Version,compCode,GpP):
     sql += "UPDATE Makeup SET GramsPerPint = '"+str(GpP)+"' WHERE FormNum = '"+compCode+"' AND FormVersion = '"+str(Version)+"' AND CompCode = '"+compCode+"'"
     sql += "ELSE INSERT INTO Makeup VALUES ('"+str(formNum)+"','"+str(Version)+"','"+compCode+"','"+str(GpP)+"')"
     connectA.execute(sql)
+    connectA.commit()
+
     print("Updated makeup for",str(formNum),str(Version),"and component",compCode,"successfully.")
 
-def addFormula( formNum,formVersion,formName):
+def addFormula( formNum,formVersion,formName,fileName):
+    #fileName = "NULL"
     sql =  "IF EXISTS (SELECT MPNum FROM Formula WHERE MPNum = '"+str(formNum)+"' AND Version = '"+str(formVersion)+"')"
     sql += "UPDATE Formula SET FormName = '"+formName+"' WHERE MPNum = '"+str(formNum)+"' AND Version = '"+str(formVersion)+"'"
-    sql += "ELSE INSERT INTO Formula VALUES ('"+str(formNum)+"','"+str(formVersion)+"','"+formName+"',NULL)"
+    sql += "ELSE INSERT INTO Formula VALUES ('"+str(formNum)+"','"+str(formVersion)+"','"+formName+"','"+fileName+"')"
+    print("Attemping to execute query: ",sql)
     connectA.execute(sql)
+    connectA.commit()
     print("Updated formula",str(formNum),str(formVersion),"successfully.")
 
 def updateNotes(formNum,formVersion,notes):

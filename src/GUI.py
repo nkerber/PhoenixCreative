@@ -36,17 +36,16 @@ class Worker(QObject):
     def __init__(self, f):
         super(Worker,self).__init__()
         self.files = f
-
     def run(self):
-        #sleep(0.5)
         current = 0
         for f in self.files:
             print(f)
             current += 1
             if ".pdf" in f:
+
                 self.fileName.emit(f)
                 to_upload = extractPDF(f)
-                addFormula( to_upload[0][2], to_upload[0][1], to_upload[0][0])
+                addFormula(to_upload[0][2], to_upload[0][1], to_upload[0][0],str("Imported from: "+f.split("/")[-1]))
                 old = to_upload[0]
                 to_upload = to_upload[1:]
                 for i in to_upload:
@@ -69,10 +68,12 @@ class MainScreen(QMainWindow):
 
         home = HomeScreen()
         upload = UploadScreen()
-        formula = FormulaScreen(self)
+        formula = FormulaScreen()
+        component = ComponentScreen()
         self.MainViewStack.addWidget(home)
         self.MainViewStack.addWidget(upload)
         self.MainViewStack.addWidget(formula)
+        self.MainViewStack.addWidget(component)
 
     def selectPanel(self):
         print("Navigating to page:",str(self.NavPane.currentRow()))
@@ -80,6 +81,8 @@ class MainScreen(QMainWindow):
         if self.NavPane.currentRow() == 2:
             self.MainViewStack.currentWidget().populateFormulaList()
             self.MainViewStack.currentWidget().clear()
+        if self.NavPane.currentRow() == 0:
+            self.MainViewStack.currentWidget().refreshCounts()
         self.changed.emit(self.NavPane.currentRow())
 
 class UploadScreen(QWidget):
@@ -124,15 +127,19 @@ class UploadScreen(QWidget):
             thread = QThread()
             worker = Worker(links)
             worker.moveToThread(thread)
-
             thread.started.connect(worker.run)
             worker.finished.connect(thread.quit)
             worker.finished.connect(worker.deleteLater)
             thread.finished.connect(thread.deleteLater)
             worker.progress.connect(newDialog.progressBar.setValue)
             worker.fileName.connect(newDialog.currentFormula.setText)
+            worker.finished.connect(newDialog.close)
 
             thread.start()
+            try:
+                sys.exit(newDialog.exec())
+            except:
+                print("")
                     
     def importFiles(self):
 
@@ -163,42 +170,42 @@ class UploadScreen(QWidget):
         try:
             sys.exit(newDialog.exec())
         except:
-            print("")
+            print("Finished uploading")
 
 class HomeScreen(QWidget):
     def __init__(self):
         super(HomeScreen,self).__init__()
         loadUi('src\\HomeWidget.ui',self)
-
+        self.refreshCounts()
+        
         #is there a better way to do this without this pointless loop?
+    def refreshCounts(self):
         for row in componentCount():
             self.numComponents.setText(str(row.Count))
         
         for row in formulaCount():
             self.numFormulas.setText(str(row.Count))
 
+class ComponentScreen(QWidget):
+     def __init__(self):
+        super(ComponentScreen, self).__init__()
+        loadUi('src\\ComponentWidget.ui',self)
+
 class FormulaScreen(QWidget):
-    def __init__(self,parent):
-        super(FormulaScreen, self).__init__(parent)
+    def __init__(self):
+        super(FormulaScreen, self).__init__()
         loadUi('src\\FormulaWidget.ui',self)
         self.populateFormulaList()
         self.measurementSelector.setCurrentIndex(currentUnit)
 
         self.versionList.currentIndexChanged.connect(self.updateMakeup)
 
-        #self.formulaList.setCurrentRow(0)
-        #self.formulaList.setCurrentItem(self.formulaList.itemFromIndex(0))
-        #neither of these seem to work. want to make it automatically
-        #display the info from the first formula in the list
- 
-        #self.backButton.clicked.connect(self.goBack)
         self.formulaList.itemSelectionChanged.connect(self.updateSelection)
 
         self.notesBox.textChanged.connect(self.notesChanged)
         self.measurementSelector.currentIndexChanged.connect(self.updateMeasureUnits)
-
+        self.deepSearchCheckbox.stateChanged.connect(self.searchFormulasResults)
         self.searchBox.textChanged.connect(self.searchFormulasResults)
-        
 
     def clear(self):
         self.notesBox.clear()
@@ -211,7 +218,11 @@ class FormulaScreen(QWidget):
         if self.searchBox.toPlainText().strip()=="":
             self.populateFormulaList()
         else:
-            r = getSearchedFormulas(self.searchBox.toPlainText())
+            if self.deepSearchCheckbox.isChecked():
+                r = deepFormulaSearch(self.searchBox.toPlainText())
+            else:
+                r = shallowFormulaSearch(self.searchBox.toPlainText())
+
             self.formulaList.clear()
             for row in r:
                 self.formulaList.addItem(str(row.MPNum)+" - "+row.FormName.title())

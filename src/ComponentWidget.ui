@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>889</width>
+    <width>890</width>
     <height>698</height>
    </rect>
   </property>
@@ -65,12 +65,12 @@
          <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string>Search colors...</string>
+         <string>Search components...</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QListWidget" name="formulaList">
+       <widget class="QListWidget" name="componentList">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -145,7 +145,7 @@
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,0,0,0,0">
+          <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0">
            <property name="spacing">
             <number>0</number>
            </property>
@@ -162,7 +162,7 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QVBoxLayout" name="colorAttributes" stretch="0,0,0,0">
+            <layout class="QVBoxLayout" name="colorAttributes" stretch="0,0,0">
              <item>
               <layout class="QHBoxLayout" name="nameinfo">
                <item>
@@ -174,14 +174,14 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Color Name: </string>
+                  <string>Component Code: </string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="colorNameLarge">
                  <property name="text">
-                  <string>No Formula Selected!</string>
+                  <string>No Component Selected!</string>
                  </property>
                 </widget>
                </item>
@@ -198,56 +198,16 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Color System Number: </string>
+                  <string>Component Description: </string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QLabel" name="colorNumLarge">
                  <property name="text">
-                  <string>No Formula Selected!</string>
+                  <string>No Description!</string>
                  </property>
                 </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="vinfo">
-               <item>
-                <widget class="QLabel" name="colorVersionLabel">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Version: </string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="versionList">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
                </item>
               </layout>
              </item>
@@ -326,46 +286,6 @@
              </item>
             </layout>
            </item>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>Notes:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QTextEdit" name="notesBox">
-             <property name="placeholderText">
-              <string>This formula has no notes. Add some here!</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </widget>
         </item>
@@ -393,12 +313,12 @@
            </font>
           </property>
           <property name="text">
-           <string>Components:</string>
+           <string>This component appears in:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QTableWidget" name="makeupTable">
+         <widget class="QTableWidget" name="formulaTable">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -443,7 +363,7 @@
           </attribute>
           <column>
            <property name="text">
-            <string>Code</string>
+            <string>Number</string>
            </property>
            <property name="textAlignment">
             <set>AlignLeading|AlignVCenter</set>
@@ -451,7 +371,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Description</string>
+            <string>Name</string>
            </property>
            <property name="textAlignment">
             <set>AlignLeading|AlignVCenter</set>
@@ -459,15 +379,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Amount</string>
-           </property>
-           <property name="textAlignment">
-            <set>AlignLeading|AlignVCenter</set>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Accumulation</string>
+            <string>Amount Included</string>
            </property>
            <property name="textAlignment">
             <set>AlignLeading|AlignVCenter</set>
