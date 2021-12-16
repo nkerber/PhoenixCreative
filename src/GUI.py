@@ -1,8 +1,7 @@
 import sys
-from PyQt5 import QtCore
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import *#QDialog, QApplication, QStackedWidget, QWidget
-from PyQt5.QtCore import QEvent, Qt, QThread, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal
 import PyQt5.QtGui as QtGui
 from PyODBCqueries import *
 from decimal import Decimal
