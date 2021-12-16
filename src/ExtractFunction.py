@@ -27,6 +27,7 @@ index = 0
 begin = False
 components = [[]]
 
+# Reset all variables to their default. Otherwise, between extractions, these variables would remain as they were.
 def reset():
     global nextColorName, nextMPNum, nextVersionNum, MPNum, colorName, versionNum, preIC, codeIndex, descIndex,gppIndex, index, begin, components
     nextColorName = False
@@ -43,12 +44,14 @@ def reset():
     begin = False
     components = [[]]
 
+# Check for decimal number because Python doesn't have the capability to include '.' in their isDigit()
 def isNum(e):
     for i in e:
         if(not str.isdigit(i) and i != '.'):
             return False
     return True
 
+# Check to see if we find any of our variable names, and override the global variables if we find any
 def checkForElements(e):
     global nextColorName
     global colorName
@@ -58,9 +61,11 @@ def checkForElements(e):
     global versionNum
     global preIC
 
+    # Get rid of any extra spaces at either end
     e['Text'] = str.rstrip(e['Text'], ' ')
     e['Text'] = str.lstrip(e['Text'], ' ')
 
+    # If the next value is supposed to be an MPNum
     if(nextMPNum):
         if(str.isdigit(e['Text'])):
             if(' ' in e['Text']):
@@ -69,10 +74,12 @@ def checkForElements(e):
                 MPNum = e['Text']
             nextMPNum = False
     
+    # If the next value is supposed to be a colorName
     if(nextColorName):
         colorName = e['Text']
         nextColorName = False
     
+    # If the next value is supposed to be a Version number
     if(nextVersionNum):
         if(not str.isdigit(e['Text']) and isNum(e['Text'])):
             if(' ' in e['Text']):
@@ -81,24 +88,33 @@ def checkForElements(e):
                 versionNum = e['Text']
             nextVersionNum = False
 
+    # If we find "MP Number" in our current text
     if("MP Number" in e['Text']):
         nextMPNum = True
+
+        # If we find a string that is longer than a basic "MP Number ", indicating that MP Number is potentially in this element
         if(len(json.dumps(e['Text'])) > len("MP Number A")): # " A" is used to give an extra space at the end plus a couple other characters, because MPNum should be 5+ numbers.
             nextMPNum = False
             s = json.dumps(e['Text']).split(' ')
             MPNum = s[2]
     
+    # If we find "Name" in the current text
     if("Name" in e['Text']):
+        # With nothing else at the end
         if(e['Text'].endswith('Name')):
             nextColorName = True
-        elif(len(e['Text']) > len("Color Name ")):
+        elif(len(e['Text']) > len("Color Name ")): # Otherwise if the text potentially has a name after "Color Name"
             colorName = json.dumps(e['Text']).split(' ')[2]
     
+    # If we find "Version" in the current text
     if("Version" in e['Text']):
-        if(e['Text'].endswith('Version')):
+        # And it ends with "Version"
+        if(e['Text'].endswith("Version")):
             nextVersionNum = True
-        elif(len(e['Text']) > len("Version ")):
+        elif(len(e['Text']) > len("Version ")): # Otherwise if it is longer than "Version ", indicating the version number might be in this element
             t = json.dumps(e['Text']).split(' ')
+
+            # But we don't find a version number after the space
             if(not isNum(t[1])):
                 nextVersionNum = True
             else:
@@ -106,22 +122,30 @@ def checkForElements(e):
         else:
             nextVersionNum = True
     
+    # If we find "Intermediate Code", we can move onto postICEElements()
     if("Intermediate Code" in e['Text']):
         preIC = 1
 
+# Data grabber
 def postICElements(e):
     global components # Lists
     global preIC, codeIndex, descIndex, gppIndex, index # Ints
     global begin # bools
 
+    # If we care about our data (i.e. if we have found two instances of "Intermediate Code")
     if(preIC == 2):
-        # print(e['Text'])
+
+        # If this is an end table element and we have begun grabbing data
         if("/TD/" in e['Path'] and begin):
+            # Reset our position and add a new component
             index = 0
             components.append([])
         elif(begin):
+            # Otherwise iterate
             index+=1
 
+        # If we are at a known index
+            # Append the current table element to that position
         if(index == codeIndex):
             components[-1].append(e['Text'])
         elif(index == descIndex):
@@ -129,14 +153,19 @@ def postICElements(e):
         elif(index == gppIndex):
             components[-1].append(e['Text'])
 
+        # Once we find our GPP index, we can start grabbing data
         if('Grams per Pint' in e['Text']):
             begin = True
         
+        # Once we find our end marker, we can stop looking for data
         if('Total:' in e['Text']):
             preIC == 3
+    
+    # Otherwise if we find our second intermediate code, we can start looking for data/indexes
     elif(str.startswith(e['Text'], "Intermediate Code")):
         preIC = 2
 
+# A way to print stuff formatted nicely
 def printCurrents():
     global colorName, versionNum, MPNum
     global components
@@ -151,6 +180,7 @@ def printCurrents():
     
     print('---------')
 
+# Send the file to Adobe and parse it
 def extractPDF(path):
     reset()
 
@@ -197,6 +227,7 @@ def extractPDF(path):
             # Open JSON file
             f = open("./output/structuredData.json", "r+", encoding="cp437") # Encoding lets us replace stupid characters
             
+            # Make sure the file isn't weirdly encoded and have other garbage in it outside of the JSON
             fixed = f.readline()
             while(fixed[0] != '{'):
                 while(fixed[0] != '{'):
@@ -209,15 +240,18 @@ def extractPDF(path):
                 fixed = fixed[:len(fixed)-1]
             f.close()
 
+            # Overwrite the current file because we don't ever delete it
             f = open("./output/structuredData.json", "w", encoding="cp437") # Close and reopen file for writing over current stuff. Then we can use it for parsing in the program.
             f.write(fixed)
             f.close()
         except (Exception):
-            print('')
+            print('Extraction process failed!')
 
+        # Open and load the file as a JSON object so we can parse it
         f = open("./output/structuredData.json")
         data = json.load(f)
 
+        # Start looking for things
         for i in data['elements']:
             if('Text' in i):
                 if(preIC == 0):
@@ -225,10 +259,10 @@ def extractPDF(path):
                 elif(preIC == 1 or preIC == 2):
                     postICElements(i)
 
+        # Set our initial elements to the formula information
         components[0][0] = colorName
         components[0][1] = versionNum
         components[0][2] = MPNum
-        # printCurrents()
         return components
 
     except (ServiceApiException, ServiceUsageException, SdkException):
