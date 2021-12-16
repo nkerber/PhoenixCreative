@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,1,1,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,1,1,0">
    <item>
     <widget class="QLabel" name="label_7">
      <property name="sizePolicy">
@@ -209,16 +209,6 @@
      <property name="text">
       <string>This application was created by Nathanael Kerber &amp; Hunter Austin. Last Updated December 2021.
 </string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>License Info</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
